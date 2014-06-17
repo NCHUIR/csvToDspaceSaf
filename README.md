@@ -52,7 +52,7 @@ Above Python 3
 
 ## Author (程式作者)
 
-TAI, CHUN-MIN <taichunmin@gmail.com>
+TAI, CHUN-MIN \<<taichunmin@gmail.com>\>
 
 National Chung Hsing University 國立中興大學
 

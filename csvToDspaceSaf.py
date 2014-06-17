@@ -1,5 +1,11 @@
-import json, csv, sys, re, os, traceback, shutil, os.path as path, xml.etree.ElementTree as ET
+''' csv convert to DSpace SAF format
 
+Please see README.md in the same directory.
+
+@Author TAI, CHUN-MIN <taichunmin@gmail.com>
+'''
+
+import json, csv, sys, re, os, traceback, shutil, os.path as path, xml.etree.ElementTree as ET
 
 def jsonDelTrailingComma( json_str ):
 	ret = []
@@ -66,66 +72,71 @@ setting = {
 }
 ''' End of Default Settings '''
 
-try:
-	with open('setting.json', encoding='utf8') as setting_json:
-		setting.update( json.loads( jsonDelTrailingComma( setting_json.read() ) ) )
-except IOError as e:
-	print("Can't read setting.json, use default setting")
-except Exception as e:
-	print( traceback.format_exc() )
+def main():
+	try:
+		with open('setting.json', encoding='utf8') as setting_json:
+			setting.update( json.loads( jsonDelTrailingComma( setting_json.read() ) ) )
+	except IOError as e:
+		print("Can't read setting.json, use default setting")
+	except Exception as e:
+		print( traceback.format_exc() )
 
-# print( json.dumps(setting, sort_keys=True, indent=2) )
+	# print( json.dumps(setting, sort_keys=True, indent=2) )
 
-if len(sys.argv)<2:
-	# need to implement help block
-	sys.exit(1)
-try:
-	reDcname = re.compile( r"^dc\.(\w+)(?:\.(\w+))?(?:\[(\w+)\])?$" )
-	reHandle = re.compile( r"^\d+/\d+^" )
-	for csvfname in sys.argv[1:]:
-		with open( csvfname, 'r', encoding='utf8' ) as csvfh:
-			fnameMaj, fnameExt = path.splitext( path.basename( csvfname ))
-			csvBaseDir = path.dirname( path.abspath(csvfname) )
+	if len(sys.argv)<2:
+		# need to implement help block
+		sys.exit(1)
+	try:
+		reDcname = re.compile( r"^dc\.(\w+)(?:\.(\w+))?(?:\[(\w+)\])?$" )
+		reHandle = re.compile( r"^\d+/\d+^" )
+		for csvfname in sys.argv[1:]:
+			with open( csvfname, 'r', encoding='utf8' ) as csvfh:
+				fnameMaj, fnameExt = path.splitext( path.basename( csvfname ))
+				csvBaseDir = path.dirname( path.abspath(csvfname) )
 
-			safBaseDir = path.join( csvBaseDir, (fnameMaj or ('SAF' + next_pki())) )
-			while path.isdir( safBaseDir ):
-				safBaseDir = path.join( csvBaseDir, 'SAF'+next_pki() )
-			else:
-				mkdir( safBaseDir )
-
-			for row in csv.DictReader(csvfh):
-				if not row['id']:
-					itemDir = mkdir( path.join( safBaseDir, row['id'] ))
+				safBaseDir = path.join( csvBaseDir, (fnameMaj or ('SAF' + next_pki())) )
+				while path.isdir( safBaseDir ):
+					safBaseDir = path.join( csvBaseDir, 'SAF'+next_pki() )
 				else:
-					itemDir = mkdir( path.join( safBaseDir, 'item'+next_pki() ))
-				dcXmlRoot = ET.fromstring('<?xml version="1.0" encoding="utf-8" standalone="no"?><dublin_core schema="dc"></dublin_core>')
-				for k, v in row.items():
-					matchDcname = reDcname.match( k )
-					if matchDcname is not None:
-						xmldatas = []
-						dcname = '.'.join(filter(bool, ['dc',matchDcname.group(1),matchDcname.group(2)] ))
-						if dcname in setting['ignoreField']:
-							continue
-						elif dcname in setting['multiField']:
-							xmldatas += [ i.strip() for i in v.split( setting['dataDelimiter'] ) ]
-						else:
-							xmldatas += [ v.strip(), ]
-						for xmldata in filter(bool, xmldatas):
-							dcDom = ET.SubElement( dcXmlRoot, 'dcvalue' )
-							dcDom.text = xmldata
-							dcDom.attrib['element'] = matchDcname.group(1)
-							dcDom.attrib['qualifier'] = ( matchDcname.group(2) or 'none' )
-							if matchDcname.group(3):
-								dcDom.attrib['language'] = matchDcname.group(3)
-					elif k == 'handle' and reHandle.match(v):
-						with open( path.join( itemDir, 'handle' ), 'w', encoding='utf8') as itemHandleFh:
-							print( v, file=itemHandleFh )
-					elif k == 'contents' and v:
-						with open( path.join( itemDir, 'contents' ), 'w', encoding='utf8') as itemContentsFh:
-							for i in v.split( setting['dataDelimiter'] ):
-								bitstreamPath = path.join(csvBaseDir,i)
-								if path.isfile( bitstreamPath ) and shutil.copy2( bitstreamPath, itemDir ):
-									print( i, file=itemContentsFh )
-				ET.ElementTree(dcXmlRoot).write(path.join( itemDir, 'dublin_core.xml' ), encoding='utf-8')
-except Exception as e:
-	print( traceback.format_exc() )
+					mkdir( safBaseDir )
+
+				for row in csv.DictReader(csvfh):
+					if not row['id']:
+						itemDir = mkdir( path.join( safBaseDir, row['id'] ))
+					else:
+						itemDir = mkdir( path.join( safBaseDir, 'item'+next_pki() ))
+					dcXmlRoot = ET.fromstring('<?xml version="1.0" encoding="utf-8" standalone="no"?><dublin_core schema="dc"></dublin_core>')
+					for k, v in row.items():
+						matchDcname = reDcname.match( k )
+						if matchDcname is not None:
+							xmldatas = []
+							dcname = '.'.join(filter(bool, ['dc',matchDcname.group(1),matchDcname.group(2)] ))
+							if dcname in setting['ignoreField']:
+								continue
+							elif dcname in setting['multiField']:
+								xmldatas += [ i.strip() for i in v.split( setting['dataDelimiter'] ) ]
+							else:
+								xmldatas += [ v.strip(), ]
+							for xmldata in filter(bool, xmldatas):
+								dcDom = ET.SubElement( dcXmlRoot, 'dcvalue' )
+								dcDom.text = xmldata
+								dcDom.attrib['element'] = matchDcname.group(1)
+								dcDom.attrib['qualifier'] = ( matchDcname.group(2) or 'none' )
+								if matchDcname.group(3):
+									dcDom.attrib['language'] = matchDcname.group(3)
+						elif k == 'handle' and reHandle.match(v):
+							with open( path.join( itemDir, 'handle' ), 'w', encoding='utf8') as itemHandleFh:
+								print( v, file=itemHandleFh )
+						elif k == 'contents' and v:
+							with open( path.join( itemDir, 'contents' ), 'w', encoding='utf8') as itemContentsFh:
+								for i in v.split( setting['dataDelimiter'] ):
+									bitstreamPath = path.join(csvBaseDir,i)
+									if path.isfile( bitstreamPath ) and shutil.copy2( bitstreamPath, itemDir ):
+										print( i, file=itemContentsFh )
+					ET.ElementTree(dcXmlRoot).write(path.join( itemDir, 'dublin_core.xml' ), encoding='utf-8')
+	except Exception as e:
+		print( traceback.format_exc() )
+
+
+if __name__ == "__main__":
+	main()
