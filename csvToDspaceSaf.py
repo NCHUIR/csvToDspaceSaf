@@ -64,6 +64,7 @@ setting = {
 		'dc.subject.other',
 	],
 }
+''' End of Default Settings '''
 
 try:
 	with open('setting.json', encoding='utf8') as setting_json:
