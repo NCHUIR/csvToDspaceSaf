@@ -7,6 +7,7 @@ Please see README.md in the same directory.
 
 import json, csv, sys, re, os, traceback, shutil, os.path as path, xml.etree.ElementTree as ET
 
+# Remove last comma after inner json object
 def jsonDelTrailingComma( json_str ):
 	ret = []
 	commaPos = inQuote = 0
@@ -35,11 +36,13 @@ def jsonDelTrailingComma( json_str ):
 		ret.append(i);
 	return ''.join(ret)
 
+# make directory recursively
 def mkdir( dirpath ):
 	if not path.isdir( dirpath ):
 		os.makedirs( dirpath )
 	return dirpath
 
+# a auto-imcrement counter
 def next_pki():
     next_pki.pki += 1
     return str(next_pki.pki)
@@ -88,7 +91,7 @@ def main():
 		sys.exit(1)
 	try:
 		reDcname = re.compile( r"^dc\.(\w+)(?:\.(\w+))?(?:\[(\w+)\])?$" )
-		reHandle = re.compile( r"^\d+/\d+^" )
+		reHandle = re.compile( r"^\d+/\d+$" )
 		for csvfname in sys.argv[1:]:
 			with open( csvfname, 'r', encoding='utf8' ) as csvfh:
 				fnameMaj, fnameExt = path.splitext( path.basename( csvfname ))
