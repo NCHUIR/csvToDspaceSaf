@@ -33,7 +33,7 @@ This program can read CSV file format which is very similar to DSpace CSV format
 
 Download python3: <https://www.python.org/downloads/>
 
-您可以在 `Windows` 系統中安裝 `windowsDragHandler.reg` 登陸檔以便您可以直接將 CSV 檔案拖曳到 `csvToDspaceSaf.py` 上來執行。
+您可以在 `Windows` 系統中安裝 `windowsDragHandler.reg` 登錄檔以便您可以直接將 CSV 檔案拖曳到 `csvToDspaceSaf.py` 上來執行。
 
 You can install `windowsDragHandler.reg` and drag csv file to the `csvToDspaceSaf.py` to execute easily in `Windows` system.
 
