@@ -36,6 +36,8 @@ setting = {
 		"dc.subject.other",
 	],
 	"dcNamePattern": "^dc\\.(\\w+)(?:\\.(\\w+))?(?:\\[(\\w+)\\])?$", # should match {1:'element', 2:'qualifier', 3:'langISO'}
+
+	"mkdir_with_number_delimiter":'_'
 }
 ''' End of Default Settings '''
 
@@ -76,11 +78,24 @@ def mkdir( dirpath ):
 		os.makedirs( dirpath )
 	return dirpath
 
-# a auto-imcrement counter
-def next_pki():
-    next_pki.pki += 1
-    return str(next_pki.pki)
-next_pki.pki = 0
+def mkdir_with_number(path_with_prefix):
+	mkdir_with_number_delimiter = setting['mkdir_with_number_delimiter']
+	cnt = 0
+	path_with_prefix = path.abspath(path_with_prefix)
+	result_path = path_with_prefix + mkdir_with_number_delimiter + str(cnt)
+	while path.isfile(result_path) or path.isdir(result_path):
+		cnt += 1
+		result_path = path_with_prefix + mkdir_with_number_delimiter + str(cnt)
+	os.makedirs(result_path)
+	return result_path
+
+def mkdir_no_colision(dirpath):
+	dirpath = path.abspath(dirpath)
+	if path.isfile(dirpath) or path.isdir(dirpath):
+		return mkdir_with_number(dirpath)
+	else:
+		os.makedirs(dirpath)
+		return dirpath
 
 reDcname = re.compile( setting["dcNamePattern"] )
 reHandle = re.compile( r"^\d+/\d+$" )
@@ -113,21 +128,17 @@ def main( csv_list ):
 	for csvfname in csv_list:
 		try:
 			fnameMaj, fnameExt = path.splitext( path.basename( csvfname ))
+			
 			if not path.isfile(csvfname) or fnameExt.lower() != '.csv':
 				raise InvalidCSVError( csvfname )
 			with open( csvfname, newline='', encoding='utf8' ) as csvfh:
 				csvBaseDir = path.dirname( path.abspath(csvfname) )
-				safBaseDir = path.join( csvBaseDir, (fnameMaj or ('SAF' + next_pki())) )
-				while path.isdir( safBaseDir ):
-					safBaseDir = path.join( csvBaseDir, 'SAF'+next_pki() )
-				else:
-					mkdir( safBaseDir )
-
+				safBaseDir = mkdir_no_colision( path.join( csvBaseDir, (fnameMaj or 'SAF') ) )
 				for row in csv.DictReader(csvfh, dialect=csv_dialect(csvfh)):
-					if not row.get( setting['fieldNameID'] ,''):
-						itemDir = mkdir( path.join( safBaseDir, row[ setting['fieldNameID'] ] ))
+					if row.get( setting['fieldNameID'] ,False):
+						itemDir = mkdir_no_colision( path.join( safBaseDir, row[ setting['fieldNameID'] ] ) )
 					else:
-						itemDir = mkdir( path.join( safBaseDir, 'item'+next_pki() ))
+						itemDir = mkdir_with_number( path.join( safBaseDir, 'item' ) )
 					dcXmlRoot = ET.fromstring('<?xml version="1.0" encoding="utf-8" standalone="no"?><dublin_core schema="dc"></dublin_core>')
 					for k, v in row.items():
 						matchDcname = reDcname.match( k )
@@ -167,6 +178,9 @@ if __name__ == "__main__":
 	if len(sys.argv)<2:
 		# need to implement help block
 		sys.exit(1)
+	#print("\nmkdir_no_colision:\n",mkdir_no_colision(sys.argv[1]))
+	#exit()
+	# print(main( sys.argv[1:] ))
 	ErrCnt = main( sys.argv[1:] )
 	if ErrCnt:
 		input()
