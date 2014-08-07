@@ -91,6 +91,7 @@ class csvToDspaceSaf:
 		setting = self.setting
 		if isinstance( csv_list, str ):
 			csv_list = [csv_list,]
+		print("Start to process...")
 		for csvfname in csv_list:
 			try:
 				fnameMaj, fnameExt = path.splitext( path.basename( csvfname ))
@@ -99,11 +100,13 @@ class csvToDspaceSaf:
 				with open( csvfname, newline='', encoding='utf8' ) as csvfh:
 					csvBaseDir = __class__.previusDir(csvfname)
 					safBaseDir = __class__.mkNoColiDir( path.join( output_folder, path.basename(csvBaseDir) ) )
+					print("Processing [%s] => [%s]" % (csvfname,safBaseDir))
 					for row in csv.DictReader(csvfh, dialect=__class__.csv_dialect(csvfh)):
 						if row.get( setting['fieldNameID'] ,False):
 							itemDir = __class__.mkNoColiDir( path.join( safBaseDir, row[ setting['fieldNameID'] ] ) )
 						else:
 							itemDir = __class__.mkSeqDir( path.join( safBaseDir, 'item' ) )
+						print("\tProcessing [%s]..." % (itemDir))
 						dcXmlRoot = ET.fromstring('<?xml version="1.0" encoding="utf-8" standalone="no"?><dublin_core schema="dc"></dublin_core>')
 						for k, v in row.items():
 							matchDcname = self.reDcname.match( k )
@@ -137,6 +140,8 @@ class csvToDspaceSaf:
 				print( type(e), ':', e.args )
 				print( traceback.format_exc() )
 				ErrCnt+=1
+			else:
+				print("Process Completed!")
 		return ErrCnt
 
 if __name__ == "__main__":
