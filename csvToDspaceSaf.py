@@ -63,7 +63,7 @@ class csvToDspaceSaf:
 		if path.exists(result):
 			result = dirpath + dirDeli + str(
 				max(
-					[int(f.split(dirDeli)[-1]) for f in os.listdir(csvToDspaceSaf.previusDir(dirpath)) if fPrefix in f]
+					[int(f.split(dirDeli)[-1]) for f in os.listdir(self.previusDir(dirpath)) if fPrefix in f]
 				) + 1
 			)
 		os.makedirs(result)
@@ -71,7 +71,7 @@ class csvToDspaceSaf:
 
 	def mkNoColiDir(dirpath): # Make No Colision Directives
 		if path.exists(dirpath):
-			return csvToDspaceSaf.mkSeqDir(dirpath)
+			return self.mkSeqDir(dirpath)
 		else:
 			os.makedirs(dirpath)
 			return dirpath
@@ -93,13 +93,13 @@ class csvToDspaceSaf:
 				if not path.isfile(csvfname) or fnameExt.lower() != '.csv':
 					raise InvalidCSVError( csvfname )
 				with open( csvfname, newline='', encoding='utf8' ) as csvfh:
-					csvBaseDir = csvToDspaceSaf.previusDir(csvfname)
-					safBaseDir = csvToDspaceSaf.mkNoColiDir( path.join( output_folder, path.basename(csvBaseDir) ) )
-					for row in csv.DictReader(csvfh, dialect=csvToDspaceSaf.csv_dialect(csvfh)):
+					csvBaseDir = self.previusDir(csvfname)
+					safBaseDir = self.mkNoColiDir( path.join( output_folder, path.basename(csvBaseDir) ) )
+					for row in csv.DictReader(csvfh, dialect=self.csv_dialect(csvfh)):
 						if row.get( setting['fieldNameID'] ,False):
-							itemDir = csvToDspaceSaf.mkNoColiDir( path.join( safBaseDir, row[ setting['fieldNameID'] ] ) )
+							itemDir = self.mkNoColiDir( path.join( safBaseDir, row[ setting['fieldNameID'] ] ) )
 						else:
-							itemDir = csvToDspaceSaf.mkSeqDir( path.join( safBaseDir, 'item' ) )
+							itemDir = self.mkSeqDir( path.join( safBaseDir, 'item' ) )
 						dcXmlRoot = ET.fromstring('<?xml version="1.0" encoding="utf-8" standalone="no"?><dublin_core schema="dc"></dublin_core>')
 						for k, v in row.items():
 							matchDcname = self.reDcname.match( k )

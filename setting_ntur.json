@@ -27,5 +27,5 @@
 		"dc.subject.mesh",
 		"dc.subject.other",
 	],
-	"dcNamePattern": "^dc\\.(\\w+)(?:\\.(\\w+))?(?:=(\\w+))?$",
+	"dcNamePattern": "^(\\w+)(?:\\.(\\w+))?(?:=(\\w+))?$",
 }
