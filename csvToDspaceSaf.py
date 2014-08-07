@@ -53,9 +53,11 @@ class csvToDspaceSaf:
 
 	class InvalidCSVError(Exception): pass
 
+	@staticmethod
 	def previusDir(dirpath): # get previous directive,ex: /var/www => /var/
 		return os.path.abspath(os.path.join(dirpath, os.pardir))
 
+	@staticmethod
 	def mkSeqDir(dirpath): # Make Sequence Directives
 		dirDeli = "_"
 		fPrefix = os.path.basename(dirpath) + dirDeli
@@ -63,22 +65,24 @@ class csvToDspaceSaf:
 		if path.exists(result):
 			result = dirpath + dirDeli + str(
 				max(
-					[int(f.split(dirDeli)[-1]) for f in os.listdir(self.previusDir(dirpath)) if fPrefix in f]
+					[int(f.split(dirDeli)[-1]) for f in os.listdir(__class__.previusDir(dirpath)) if fPrefix in f]
 				) + 1
 			)
 		os.makedirs(result)
 		return result
 
+	@staticmethod
 	def mkNoColiDir(dirpath): # Make No Colision Directives
 		if path.exists(dirpath):
-			return self.mkSeqDir(dirpath)
+			return __class__.mkSeqDir(dirpath)
 		else:
 			os.makedirs(dirpath)
 			return dirpath
 
+	@staticmethod
 	def csv_dialect( fh ):
 		fh.seek(0)
-		dialect = csv.Sniffer().sniff( fh.read(1024) )
+		dialect = csv.Sniffer().sniff( fh.read(2048) )
 		fh.seek(0)
 		return dialect
 
@@ -93,13 +97,13 @@ class csvToDspaceSaf:
 				if not path.isfile(csvfname) or fnameExt.lower() != '.csv':
 					raise InvalidCSVError( csvfname )
 				with open( csvfname, newline='', encoding='utf8' ) as csvfh:
-					csvBaseDir = self.previusDir(csvfname)
-					safBaseDir = self.mkNoColiDir( path.join( output_folder, path.basename(csvBaseDir) ) )
-					for row in csv.DictReader(csvfh, dialect=self.csv_dialect(csvfh)):
+					csvBaseDir = __class__.previusDir(csvfname)
+					safBaseDir = __class__.mkNoColiDir( path.join( output_folder, path.basename(csvBaseDir) ) )
+					for row in csv.DictReader(csvfh, dialect=__class__.csv_dialect(csvfh)):
 						if row.get( setting['fieldNameID'] ,False):
-							itemDir = self.mkNoColiDir( path.join( safBaseDir, row[ setting['fieldNameID'] ] ) )
+							itemDir = __class__.mkNoColiDir( path.join( safBaseDir, row[ setting['fieldNameID'] ] ) )
 						else:
-							itemDir = self.mkSeqDir( path.join( safBaseDir, 'item' ) )
+							itemDir = __class__.mkSeqDir( path.join( safBaseDir, 'item' ) )
 						dcXmlRoot = ET.fromstring('<?xml version="1.0" encoding="utf-8" standalone="no"?><dublin_core schema="dc"></dublin_core>')
 						for k, v in row.items():
 							matchDcname = self.reDcname.match( k )
