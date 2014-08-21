@@ -51,8 +51,6 @@ class csvToDspaceSaf:
 		self.reDcname = re.compile( self.setting["dcNamePattern"] )
 		self.reHandle = re.compile( r"^\d+/\d+$" )
 
-	class InvalidCSVError(Exception): pass
-
 	@staticmethod
 	def previusDir(dirpath): # get previous directive,ex: /var/www => /var/
 		return os.path.abspath(os.path.join(dirpath, os.pardir))
@@ -96,7 +94,7 @@ class csvToDspaceSaf:
 			try:
 				fnameMaj, fnameExt = path.splitext( path.basename( csvfname ))
 				if not path.isfile(csvfname) or fnameExt.lower() != '.csv':
-					raise InvalidCSVError( csvfname )
+					raise Exception("[%s] not Exists or not a csv file!" % csvfname)
 				with open( csvfname, newline='', encoding='utf8' ) as csvfh:
 					csvBaseDir = __class__.previusDir(csvfname)
 					safBaseDir = __class__.mkNoColiDir( path.join( output_folder, path.basename(csvBaseDir) ) )
