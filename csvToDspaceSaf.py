@@ -87,7 +87,7 @@ class csvToDspaceSaf:
 		return dialect
 
 	def main( self,csv_list,output_folder ):
-		ErrCnt = 0
+		Err = []
 		setting = self.setting
 		if isinstance( csv_list, str ):
 			csv_list = [csv_list,]
@@ -139,10 +139,10 @@ class csvToDspaceSaf:
 			except Exception as e:
 				print( type(e), ':', e.args )
 				print( traceback.format_exc() )
-				ErrCnt+=1
+				Err.append(e)
 			else:
 				print("Process Completed!")
-		return ErrCnt
+		return Err
 
 if __name__ == "__main__":
 	if len(sys.argv)<3:
