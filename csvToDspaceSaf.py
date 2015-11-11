@@ -40,8 +40,10 @@ class csvToDspaceSaf:
 				"dc.subject.lcsh",
 				"dc.subject.mesh",
 				"dc.subject.other",
+				"dc.subject[zh_TW]",
+				"dc.subject[en_US]"
 			],
-			"dcNamePattern": "^dc\\.(\\w+)(?:\\.(\\w+))?(?:\\[(\\w+)\\])?$", # should match {1:'element', 2:'qualifier', 3:'langISO'}
+			"dcNamePattern": "^dc\.(\w+)(?:\.(\w+))?(?:\[(\w+)\])?$", # should match {1:'element', 2:'qualifier', 3:'langISO'}
 		}
 		''' End of Default Settings '''
 
@@ -80,12 +82,14 @@ class csvToDspaceSaf:
 	@staticmethod
 	def csv_dialect( fh ):
 		fh.seek(0)
-		dialect = csv.Sniffer().sniff( fh.read(2048) )
+		dialect = csv.Sniffer().sniff( fh.read(4096) )
+		dialect.skipinitialspace=True
 		fh.seek(0)
 		return dialect
 
 	def main( self,csv_list,output_folder ):
 		Err = []
+		ch2replace = ["‘","’","“","”","\"\"","\"\""]										#replace the spacial symbols:"‘","’","“","”","\"\"","\"\"" with "'"
 		setting = self.setting
 		if isinstance( csv_list, str ):
 			csv_list = [csv_list,]
@@ -95,11 +99,31 @@ class csvToDspaceSaf:
 				fnameMaj, fnameExt = path.splitext( path.basename( csvfname ))
 				if not path.isfile(csvfname) or fnameExt.lower() != '.csv':
 					raise Exception("[%s] not Exists or not a csv file!" % csvfname)
-				with open( csvfname, newline='', encoding='utf8' ) as csvfh:
-					csvBaseDir = __class__.previusDir(csvfname)
+				newCsvfname = os.path.abspath(os.path.join(__class__.previusDir(csvfname),"New"+path.basename( csvfname )))	
+				with open( csvfname,'r', newline='', encoding='utf8' ) as csvfr:					
+					with open( newCsvfname,'w', newline='', encoding='utf8' ) as csvfw:
+						for content in csvfr:
+							content=content.replace(",\"\"\"",",\"'")
+							content=content.replace("\"\"\",","'\",")
+							content=content.replace("。'","，'")
+							for ch in ch2replace:
+								content=content.replace(ch,"'")
+							csvfw.write(content)
+				with open( newCsvfname, newline='', encoding='utf8' ) as csvfh:
+					csvBaseDir = __class__.previusDir(newCsvfname)
 					safBaseDir = __class__.mkNoColiDir( path.join( output_folder, path.basename(csvBaseDir) ) )
-					print("Processing [%s] => [%s]" % (csvfname,safBaseDir))
-					for row in csv.DictReader(csvfh, dialect=__class__.csv_dialect(csvfh)):
+					print("Processing [%s] => [%s]" % (newCsvfname,safBaseDir))
+					try:
+						csvObj = csv.DictReader(csvfh, dialect=__class__.csv_dialect(csvfh),skipinitialspace=True)
+						'''for row in csvObj:
+							for k, v in row.items():
+								print(k)
+								print(v)'''
+					except Exception as e:
+						print("dialect sniff Error, using default fallback...")
+						csvfh.seek(0)
+						csvObj = csv.DictReader(csvfh)
+					for row in csvObj:
 						if row.get( setting['fieldNameID'] ,False):
 							itemDir = __class__.mkNoColiDir( path.join( safBaseDir, row[ setting['fieldNameID'] ] ) )
 						else:
@@ -107,6 +131,8 @@ class csvToDspaceSaf:
 						print("\tProcessing [%s]..." % (itemDir))
 						dcXmlRoot = ET.fromstring('<?xml version="1.0" encoding="utf-8" standalone="no"?><dublin_core schema="dc"></dublin_core>')
 						for k, v in row.items():
+							if k is not None:
+								k=k.strip()
 							matchDcname = self.reDcname.match( k )
 							if matchDcname is not None:
 								xmldatas = []
@@ -140,6 +166,7 @@ class csvToDspaceSaf:
 				Err.append(e)
 			else:
 				print("Process Completed!")
+			#os.remove(csvfname)																				#remove original csv
 		return Err
 
 if __name__ == "__main__":
