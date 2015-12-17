@@ -89,7 +89,7 @@ class csvToDspaceSaf:
 
 	def main( self,csv_list,output_folder ):
 		Err = []
-		ch2replace = ["‘","’","“","”","\"\"","\"\""]										#replace the spacial symbols:"‘","’","“","”","\"\"","\"\"" with "'"
+		ch2replace = ["‘","’","“","”","\"\"","''"]										#replace the spacial symbols:"‘","’","“","”","\"\"" with "'"
 		setting = self.setting
 		if isinstance( csv_list, str ):
 			csv_list = [csv_list,]
@@ -115,10 +115,13 @@ class csvToDspaceSaf:
 					print("Processing [%s] => [%s]" % (newCsvfname,safBaseDir))
 					try:
 						csvObj = csv.DictReader(csvfh, dialect=__class__.csv_dialect(csvfh),skipinitialspace=True)
-						'''for row in csvObj:
+						'''count = 0
+						for row in csvObj:
+							count = count + 1
 							for k, v in row.items():
-								print(k)
-								print(v)'''
+								if count < 4 :
+									print(k)
+									print(v)'''
 					except Exception as e:
 						print("dialect sniff Error, using default fallback...")
 						csvfh.seek(0)
