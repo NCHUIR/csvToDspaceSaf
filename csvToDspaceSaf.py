@@ -169,7 +169,8 @@ class csvToDspaceSaf:
 				Err.append(e)
 			else:
 				print("Process Completed!")
-			#os.remove(csvfname)																				#remove original csv
+			os.remove(csvfname)																				#remove original csv
+			os.rename(newCsvfname,csvfname)																	#rename new csv to original name
 		return Err
 
 if __name__ == "__main__":
